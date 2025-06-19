@@ -50,18 +50,19 @@ async def choose(ctx, *choices: str):
     """Chooses between multiple choices."""
     await ctx.send(random.choice(choices))
 
-
 @bot.command()
-async def repeat(ctx, times: int, content='repeating...'):
-    """Repeats a message multiple times."""
-    for i in range(times):
-        await ctx.send(content)
-
-
-# @bot.command()
-# async def joined(ctx, member: discord.Member):
-#     """Says when a member joined."""
-#     await ctx.send(f'{member.name} joined {discord.utils.format_dt(member.joined_at)}')
+async def chwazi(ctx):
+    """Randomly chooses a member from the current voice channel."""
+    if ctx.author.voice and ctx.author.voice.channel:
+        channel = ctx.author.voice.channel
+        members = [member for member in channel.members if not member.bot]
+        if members:
+            chosen = random.choice(members)
+            await ctx.send(f'Randomly selected: {chosen.display_name}')
+        else:
+            await ctx.send('No human members found in the voice channel.')
+    else:
+        await ctx.send('You are not connected to a voice channel.')
 
 
 @bot.group()
