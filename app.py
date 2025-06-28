@@ -10,6 +10,8 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 load_dotenv()
+asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 
 description = '''An example bot to showcase the discord.ext.commands extension
 module.
@@ -99,8 +101,8 @@ class Help_Choosing_Games(commands.Cog, name='Help Choosing Games'):
             await ctx.send('Please provide one or more game name to record, separated by commas.')
             return
         with open("_data.json", 'r+') as file:
-            for game in games_names.split(','):
-                data = json.load(file)
+            data = json.load(file)
+            for game in [ name.strip() for name in games_names.split(',')]:
                 if( game not in data["available_games"]):
                     data["available_games"].append(game)
                     file.seek(0)
@@ -131,8 +133,8 @@ class Help_Choosing_Games(commands.Cog, name='Help Choosing Games'):
             return
         check_data_file()
         with open("_data.json", 'r+') as file:
-            for game in game_names.split(','):
-                data = json.load(file)
+            data = json.load(file)
+            for game in [ name.strip() for name in game_names.split(',')]:
                 if game in data["available_games"]:
                     data["available_games"].remove(game)
                     file.seek(0)
