@@ -10,7 +10,8 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 load_dotenv()
-asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+if( os.name == 'nt' ):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 description = '''An example bot to showcase the discord.ext.commands extension
