@@ -92,7 +92,7 @@ async def recordgame(ctx, game_name: str):
     """Records a game played by the user."""
     check_data_file()
     with open("_data.json", 'w+') as file:
-        data = json.load(file.read())
+        data = json.loads(file.read())
         if( game_name not in data["available_games"]):
             data["available_games"] += game_name
             file.write(json.dumps(data))
@@ -105,7 +105,7 @@ async def listgames(ctx):
     """Lists all recorded games."""
     check_data_file()
     with open("_data.json", 'w+') as file:
-        data = json.load(file.read())
+        data = json.loads(file.read())
         if data["available_games"]:
             games_list = ', '.join(data["available_games"])
             await ctx.send(f'Recorded games: {games_list}')
@@ -117,7 +117,7 @@ async def forgetgame(ctx, game_name: str):
     """Forgets a recorded game."""
     check_data_file()
     with open("_data.json", 'w+') as file:
-        data = json.load(file.read())
+        data = json.loads(file.read())
         if game_name in data["available_games"]:
             data["available_games"].remove(game_name)
             with open("_data.json", "w") as write_file:
@@ -131,7 +131,7 @@ async def choosegame(ctx):
     """Chooses a game from the recorded games."""
     check_data_file()
     with open("_data.json", 'w+') as file:
-        data = json.load(file.read())
+        data = json.loads(file.read())
         if data["available_games"]:
             chosen_game = random.choice(data["available_games"])
             await ctx.send(f'Randomly selected game: {chosen_game}')
