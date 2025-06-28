@@ -91,7 +91,7 @@ async def _bot(ctx):
 async def recordgame(ctx, game_name: str):
     """Records a game played by the user."""
     check_data_file()
-    with open("_data.json", "a") as file:
+    with open("_data.json", "a+") as file:
         data = json.load(file.read())
         if( game_name not in data["available_games"]):
             data["available_games"] += game_name
