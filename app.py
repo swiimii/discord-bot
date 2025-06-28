@@ -14,10 +14,7 @@ if( os.name == 'nt' ):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
-description = '''An example bot to showcase the discord.ext.commands extension
-module.
-
-There are a number of utility commands being showcased here.'''
+description = '''Sam's bot for choosing between and helping play games.'''
 
 intents = discord.Intents.default()
 intents.members = True
