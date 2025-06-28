@@ -99,7 +99,7 @@ class Help_Choosing_Games(commands.Cog, name='Help Choosing Games'):
             await ctx.send('Please provide one or more game name to record, separated by commas.')
             return
         with open("_data.json", 'r+') as file:
-            for game in games_names.split('.'):
+            for game in games_names.split(','):
                 data = json.load(file)
                 if( game not in data["available_games"]):
                     data["available_games"].append(game)
