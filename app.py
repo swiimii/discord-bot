@@ -1,9 +1,11 @@
 # This example requires the 'members' and 'message_content' privileged intents to function.
 
 import discord
-from discord.ext import commands
-import random
+import json
 import os
+import random
+
+from discord.ext import commands
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -19,6 +21,11 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix='!', description=description, intents=intents)
 
+def check_data_file():
+    """Check if the data file exists, if not create it."""
+    if not os.path.exists("_data.json"):
+        with open("_data.json", "w") as file:
+            json.dump({"available_games": []}, file)
 
 @bot.event
 async def on_ready():
@@ -80,5 +87,29 @@ async def _bot(ctx):
     """Is the bot cool?"""
     await ctx.send('Yes, the bot is cool.')
 
+@bot.command()
+async def recordgame(ctx, game_name: str):
+    """Records a game played by the user."""
+    check_data_file()
+    with open("_data.json", "a") as file:
+        data = json.load(file.read())
+        if( game_name not in data["available_games"]):
+            data["available_games"] += game_name
+            file.write(json.dumps(data))
+            await ctx.send(f'Game "{game_name}" has been recorded!')
+        else:
+            await ctx.send(f'Game "{game_name}" is already recorded!')
+
+bot.command()
+async def choosegame(ctx):
+    """Chooses a game from the recorded games."""
+    check_data_file()
+    with open("_data.json", "r") as file:
+        data = json.load(file.read())
+        if data["available_games"]:
+            chosen_game = random.choice(data["available_games"])
+            await ctx.send(f'Randomly selected game: {chosen_game}')
+        else:
+            await ctx.send('No games have been recorded yet.')
 
 bot.run(os.getenv("DISCORD_TOKEN"))

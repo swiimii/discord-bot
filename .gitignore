@@ -194,3 +194,4 @@ cython_debug/
 .cursorindexingignore
 
 token.txt
+_data.json
