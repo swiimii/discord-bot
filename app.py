@@ -24,7 +24,7 @@ bot = commands.Bot(command_prefix='!', description=description, intents=intents)
 def check_data_file():
     """Check if the data file exists, if not create it."""
     if not os.path.exists("_data.json"):
-        with open("_data.json", "w") as file:
+        with open("_data.json", 'w+') as file:
             json.dump({"available_games": []}, file)
 
 @bot.event
@@ -91,7 +91,7 @@ async def _bot(ctx):
 async def recordgame(ctx, game_name: str):
     """Records a game played by the user."""
     check_data_file()
-    with open("_data.json", "a+") as file:
+    with open("_data.json", 'w+') as file:
         data = json.load(file.read())
         if( game_name not in data["available_games"]):
             data["available_games"] += game_name
@@ -104,7 +104,7 @@ async def recordgame(ctx, game_name: str):
 async def listgames(ctx):
     """Lists all recorded games."""
     check_data_file()
-    with open("_data.json", "r") as file:
+    with open("_data.json", 'w+') as file:
         data = json.load(file.read())
         if data["available_games"]:
             games_list = ', '.join(data["available_games"])
@@ -116,7 +116,7 @@ async def listgames(ctx):
 async def forgetgame(ctx, game_name: str):
     """Forgets a recorded game."""
     check_data_file()
-    with open("_data.json", "r") as file:
+    with open("_data.json", 'w+') as file:
         data = json.load(file.read())
         if game_name in data["available_games"]:
             data["available_games"].remove(game_name)
@@ -130,7 +130,7 @@ bot.command()
 async def choosegame(ctx):
     """Chooses a game from the recorded games."""
     check_data_file()
-    with open("_data.json", "r") as file:
+    with open("_data.json", 'w+') as file:
         data = json.load(file.read())
         if data["available_games"]:
             chosen_game = random.choice(data["available_games"])
