@@ -4,6 +4,7 @@ import discord
 import json
 import os
 import random
+import asyncio
 
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -25,51 +26,13 @@ def check_data_file():
     """Check if the data file exists, if not create it."""
     if not os.path.exists("_data.json"):
         with open("_data.json", 'w+') as file:
-            json.dump({"available_games": []}, file)
+            file.write("{\"available_games\": []}")
+            file.close()
 
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('------')
-
-
-@bot.command()
-async def add(ctx, left: int, right: int):
-    """Adds two numbers together."""
-    await ctx.send(left + right)
-
-
-@bot.command()
-async def roll(ctx, dice: str):
-    """Rolls a dice in NdN format."""
-    try:
-        rolls, limit = map(int, dice.split('d'))
-    except Exception:
-        await ctx.send('Format has to be in NdN!')
-        return
-
-    result = ', '.join(str(random.randint(1, limit)) for r in range(rolls))
-    await ctx.send(result)
-
-
-@bot.command(description='For when you wanna settle the score some other way')
-async def choose(ctx, *choices: str):
-    """Chooses between multiple choices."""
-    await ctx.send(random.choice(choices))
-
-@bot.command()
-async def chwazi(ctx):
-    """Randomly chooses a member from the current voice channel."""
-    if ctx.author.voice and ctx.author.voice.channel:
-        channel = ctx.author.voice.channel
-        members = [member for member in channel.members if not member.bot]
-        if members:
-            chosen = random.choice(members)
-            await ctx.send(f'Randomly selected: {chosen.display_name}')
-        else:
-            await ctx.send('No human members found in the voice channel.')
-    else:
-        await ctx.send('You are not connected to a voice channel.')
 
 
 @bot.group()
@@ -87,55 +50,110 @@ async def _bot(ctx):
     """Is the bot cool?"""
     await ctx.send('Yes, the bot is cool.')
 
-@bot.command()
-async def recordgame(ctx, game_name: str):
-    """Records a game played by the user."""
-    check_data_file()
-    with open("_data.json", 'w+') as file:
-        data = json.loads(file.read())
-        if( game_name not in data["available_games"]):
-            data["available_games"] += game_name
-            file.write(json.dumps(data))
-            await ctx.send(f'Game "{game_name}" has been recorded!')
+class Game_Tools(commands.Cog, name='Game Tools'):
+    def __init__(self, bot):
+        self.bot = bot
+    
+    @commands.command()
+    async def chwazi(self, ctx):
+        """Randomly chooses a voice participant."""
+        if ctx.author.voice and ctx.author.voice.channel:
+            channel = ctx.author.voice.channel
+            members = [member for member in channel.members if not member.bot]
+            if members:
+                chosen = random.choice(members)
+                await ctx.send(f'Randomly selected: {chosen.display_name}')
+            else:
+                await ctx.send('No human members found in the voice channel.')
         else:
-            await ctx.send(f'Game "{game_name}" is already recorded!')
+            await ctx.send('You are not connected to a voice channel.')
+    
+    @commands.command()
+    async def roll(ctx, dice: str):
+        """Rolls a dice in NdN format."""
+        try:
+            rolls, limit = map(int, dice.split('d'))
+        except Exception:
+            await ctx.send('Format has to be in NdN!')
+            return
 
-@bot.command()
-async def listgames(ctx):
-    """Lists all recorded games."""
-    check_data_file()
-    with open("_data.json", 'w+') as file:
-        data = json.loads(file.read())
-        if data["available_games"]:
-            games_list = ', '.join(data["available_games"])
-            await ctx.send(f'Recorded games: {games_list}')
-        else:
-            await ctx.send('No games have been recorded yet.')
+        result = ', '.join(str(random.randint(1, limit)) for r in range(rolls))
+        await ctx.send(result)
 
-@bot.command()
-async def forgetgame(ctx, game_name: str):
-    """Forgets a recorded game."""
-    check_data_file()
-    with open("_data.json", 'w+') as file:
-        data = json.loads(file.read())
-        if game_name in data["available_games"]:
-            data["available_games"].remove(game_name)
-            with open("_data.json", "w") as write_file:
-                json.dump(data, write_file)
-            await ctx.send(f'Game "{game_name}" has been forgotten!')
-        else:
-            await ctx.send(f'Game "{game_name}" is not recorded!')
 
-bot.command()
-async def choosegame(ctx):
-    """Chooses a game from the recorded games."""
-    check_data_file()
-    with open("_data.json", 'w+') as file:
-        data = json.loads(file.read())
-        if data["available_games"]:
-            chosen_game = random.choice(data["available_games"])
-            await ctx.send(f'Randomly selected game: {chosen_game}')
-        else:
-            await ctx.send('No games have been recorded yet.')
+    @commands.command()
+    async def choose(ctx, *choices: str):
+        """Chooses between multiple choices."""
+        await ctx.send(random.choice(choices))
 
+class Help_Choosing_Games(commands.Cog, name='Help Choosing Games'):
+    def __init__(self, bot):
+        self.bot = bot
+    
+    @commands.command()
+    async def addgame(self, ctx, *games_names):
+        """Records a game played by the user."""
+        check_data_file()
+        games_names = ' '.join(games_names)
+        if not games_names:
+            await ctx.send('Please provide one or more game name to record, separated by commas.')
+            return
+        with open("_data.json", 'r+') as file:
+            for game in games_names.split('.'):
+                data = json.load(file)
+                if( game not in data["available_games"]):
+                    data["available_games"].append(game)
+                    file.seek(0)
+                    file.write(json.dumps(data))
+                    file.truncate()
+                    await ctx.send(f'Game "{game}" has been recorded!')
+                else:
+                    await ctx.send(f'Game "{game}" is already recorded!')
+
+    @commands.command()
+    async def listgames(self, ctx):
+        """Lists all recorded games."""
+        check_data_file()
+        with open("_data.json", 'r+') as file:
+            data = json.load(file)
+            if data["available_games"]:
+                games_list = '\n- '.join(data["available_games"])
+                await ctx.send(f'Recorded games: \n- {games_list}')
+            else:
+                await ctx.send('No games have been recorded yet.')
+
+    @commands.command()
+    async def forgetgame(self, ctx, *game_names):
+        """Forgets a recorded game."""
+        game_names = ' '.join(game_names)
+        if not game_names:
+            await ctx.send('Please provide one or more game names to forget, separated by commas.')
+            return
+        check_data_file()
+        with open("_data.json", 'r+') as file:
+            for game in game_names.split(','):
+                data = json.load(file)
+                if game in data["available_games"]:
+                    data["available_games"].remove(game)
+                    file.seek(0)
+                    file.write(json.dumps(data))
+                    file.truncate()
+                    await ctx.send(f'Game "{game}" has been forgotten!')
+                else:
+                    await ctx.send(f'Game "{game}" is not recorded!')
+
+    @commands.command()
+    async def choosegame(self, ctx):
+        """Chooses a game from the recorded games."""
+        check_data_file()
+        with open("_data.json", 'r+') as file:
+            data = json.load(file)
+            if data["available_games"]:
+                chosen_game = random.choice(data["available_games"])
+                await ctx.send(f'Randomly selected game: {chosen_game}')
+            else:
+                await ctx.send('No games have been recorded yet.')
+
+asyncio.run(bot.add_cog(Game_Tools(bot)))
+asyncio.run(bot.add_cog(Help_Choosing_Games(bot)))
 bot.run(os.getenv("DISCORD_TOKEN"))
