@@ -100,6 +100,32 @@ async def recordgame(ctx, game_name: str):
         else:
             await ctx.send(f'Game "{game_name}" is already recorded!')
 
+@bot.command()
+async def listgames(ctx):
+    """Lists all recorded games."""
+    check_data_file()
+    with open("_data.json", "r") as file:
+        data = json.load(file.read())
+        if data["available_games"]:
+            games_list = ', '.join(data["available_games"])
+            await ctx.send(f'Recorded games: {games_list}')
+        else:
+            await ctx.send('No games have been recorded yet.')
+
+@bot.command()
+async def forgetgame(ctx, game_name: str):
+    """Forgets a recorded game."""
+    check_data_file()
+    with open("_data.json", "r") as file:
+        data = json.load(file.read())
+        if game_name in data["available_games"]:
+            data["available_games"].remove(game_name)
+            with open("_data.json", "w") as write_file:
+                json.dump(data, write_file)
+            await ctx.send(f'Game "{game_name}" has been forgotten!')
+        else:
+            await ctx.send(f'Game "{game_name}" is not recorded!')
+
 bot.command()
 async def choosegame(ctx):
     """Chooses a game from the recorded games."""
