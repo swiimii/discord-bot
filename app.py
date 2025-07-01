@@ -69,7 +69,7 @@ class Game_Tools(commands.Cog, name='Game Tools'):
             await ctx.send('You are not connected to a voice channel.')
     
     @commands.command()
-    async def roll(ctx, dice: str):
+    async def roll(self, ctx, dice: str):
         """Rolls a dice in NdN format."""
         try:
             rolls, limit = map(int, dice.split('d'))
@@ -82,7 +82,7 @@ class Game_Tools(commands.Cog, name='Game Tools'):
 
 
     @commands.command()
-    async def choose(ctx, *choices: str):
+    async def choose(self, ctx, *choices: str):
         """Chooses between multiple choices."""
         await ctx.send(random.choice(choices))
 
