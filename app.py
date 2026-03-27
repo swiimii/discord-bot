@@ -26,7 +26,7 @@ def check_data_file():
     """Check if the data file exists, if not create it."""
     if not os.path.exists("_data.json"):
         with open("_data.json", 'w+') as file:
-            file.write("{\"available_games\": []}")
+            file.write("{\"available_games\": [], \"wishlist\": []}")
             file.close()
 
 @bot.event
@@ -169,8 +169,8 @@ class Help_Planning_Games(commands.Cog, name='Help Planning Games'):
         with open("_data.json", 'r+') as file:
             data = json.load(file)
             for game in [ name.strip() for name in games_names.split(',')]:
-                if( game not in data["wishlisted_games"]):
-                    data["wishlisted_games"].append(game)
+                if( game not in data["wishlist"]):
+                    data["wishlist"].append(game)
                     file.seek(0)
                     file.write(json.dumps(data))
                     file.truncate()
@@ -184,8 +184,8 @@ class Help_Planning_Games(commands.Cog, name='Help Planning Games'):
         check_data_file()
         with open("_data.json", 'r+') as file:
             data = json.load(file)
-            if data["wishlisted_games"]:
-                games_list = '\n- '.join(data["wishlisted_games"])
+            if data["wishlist"]:
+                games_list = '\n- '.join(data["wishlist"])
                 await ctx.send(f'Wishlisted games: \n- {games_list}')
             else:
                 await ctx.send('No games have been wishlisted yet.')
@@ -201,8 +201,8 @@ class Help_Planning_Games(commands.Cog, name='Help Planning Games'):
         with open("_data.json", 'r+') as file:
             data = json.load(file)
             for game in [ name.strip() for name in game_names.split(',')]:
-                if game in data["wishlisted_games"]:
-                    data["wishlisted_games"].remove(game)
+                if game in data["wishlist"]:
+                    data["wishlist"].remove(game)
                     file.seek(0)
                     file.write(json.dumps(data))
                     file.truncate()
