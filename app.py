@@ -96,7 +96,7 @@ class Help_Choosing_Games(commands.Cog, name='Help Choosing Games'):
         check_data_file()
         games_names = ' '.join(games_names)
         if not games_names:
-            await ctx.send('Please provide one or more game name to record, separated by commas.')
+            await ctx.send('Please provide one or more game names to record, separated by commas.')
             return
         with open("_data.json", 'r+') as file:
             data = json.load(file)
@@ -154,6 +154,64 @@ class Help_Choosing_Games(commands.Cog, name='Help Choosing Games'):
             else:
                 await ctx.send('No games have been recorded yet.')
 
+class Help_Planning_Games(commands.Cog, name='Help Planning Games'):
+    def __init__(self, bot):
+        self.bot = bot
+    
+    @commands.command()
+    async def wishlistadd(self, ctx, *games_names):
+        """Records a game played by the user."""
+        check_data_file()
+        games_names = ' '.join(games_names)
+        if not games_names:
+            await ctx.send('Please provide one or more game names to record, separated by commas.')
+            return
+        with open("_data.json", 'r+') as file:
+            data = json.load(file)
+            for game in [ name.strip() for name in games_names.split(',')]:
+                if( game not in data["wishlisted_games"]):
+                    data["wishlisted_games"].append(game)
+                    file.seek(0)
+                    file.write(json.dumps(data))
+                    file.truncate()
+                    await ctx.send(f'Game "{game}" has been wishlisted!')
+                else:
+                    await ctx.send(f'Game "{game}" is already wishlisted!')
+
+    @commands.command()
+    async def wishlist(self, ctx):
+        """Lists all wishlisted games."""
+        check_data_file()
+        with open("_data.json", 'r+') as file:
+            data = json.load(file)
+            if data["wishlisted_games"]:
+                games_list = '\n- '.join(data["wishlisted_games"])
+                await ctx.send(f'Wishlisted games: \n- {games_list}')
+            else:
+                await ctx.send('No games have been wishlisted yet.')
+
+    @commands.command()
+    async def wishlistforget(self, ctx, *game_names):
+        """Forgets a wishlisted game."""
+        game_names = ' '.join(game_names)
+        if not game_names:
+            await ctx.send('Please provide one or more game names to forget, separated by commas.')
+            return
+        check_data_file()
+        with open("_data.json", 'r+') as file:
+            data = json.load(file)
+            for game in [ name.strip() for name in game_names.split(',')]:
+                if game in data["wishlisted_games"]:
+                    data["wishlisted_games"].remove(game)
+                    file.seek(0)
+                    file.write(json.dumps(data))
+                    file.truncate()
+                    await ctx.send(f'Game "{game}" has been forgotten!')
+                else:
+                    await ctx.send(f'Game "{game}" is not recorded!')
+
+
 asyncio.run(bot.add_cog(Game_Tools(bot)))
 asyncio.run(bot.add_cog(Help_Choosing_Games(bot)))
+asyncio.run(bot.add_cog(Help_Planning_Games(bot)))
 bot.run(os.getenv("DISCORD_TOKEN"))
