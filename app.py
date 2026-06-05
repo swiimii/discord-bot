@@ -1,12 +1,13 @@
 # This example requires the 'members' and 'message_content' privileged intents to function.
-
+import datetime
 import discord
 import json
 import os
 import random
 import asyncio
+import steamApi
 
-from discord.ext import commands
+from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,24 +17,68 @@ if( os.name == 'nt' ):
 
 description = '''Sam's bot for choosing between and helping play games.'''
 
-intents = discord.Intents.default()
-intents.members = True
-intents.message_content = True
+intents_cfg = discord.Intents.default()
+intents_cfg.members = True
+intents_cfg.message_content = True
 
-bot = commands.Bot(command_prefix='!', description=description, intents=intents)
+steam_time_check = [datetime.time(hour=14, minute=30, tzinfo=datetime.timezone(datetime.timedelta(hours=-5), name="EST"))]
+
+async def update_sales(channel):
+    newSalesCount = 0
+    message_str = f"# New Steam Sales: "
+    check_data_file()
+    with open("_data.json", 'r+') as file:
+        data = json.load(file)
+        if data["wishlist"]:
+            games_appid_list = [ key for key in data["wishlist"].keys() ]
+            for appId in games_appid_list:
+                previousPrice = 99999
+                if( "price" in data["wishlist"][appId] ):
+                    previousPrice = float(data["wishlist"][appId]["price"].replace("$",""))
+                saleInfo = steamApi.getGameSaleInfo(appId)
+                if saleInfo:
+                    data["wishlist"][appId] = saleInfo
+                    if "sale" in saleInfo.keys() and float(saleInfo["price"].replace("$","")) < (previousPrice - .01):
+                        newSalesCount += 1
+                        message_str += f"\n### {saleInfo['name']} is {saleInfo['sale']} off, down to {saleInfo['price']}."
+                        message_str += f"\n{saleInfo['saleDetails']}\n"
+                    else:
+                        print(f"{data['wishlist'][appId]['name']} has no new discount...")
+                        pass
+                else:
+                    pass
+            file.seek(0)
+            file.write(json.dumps(data))
+            file.truncate()
+            file.close()
+            if( newSalesCount == 0 ):
+                return False
+            else:
+                print("Sending message: \n" + message_str)
+                await channel.send(message_str)
+
+bot = commands.Bot(command_prefix='!', description=description, intents=intents_cfg)
 
 def check_data_file():
     """Check if the data file exists, if not create it."""
     if not os.path.exists("_data.json"):
         with open("_data.json", 'w+') as file:
-            file.write("{\"available_games\": [], \"wishlist\": []}")
+            file.write("{\"available_games\": [], \"wishlist\": {}}")
             file.close()
 
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('------')
+    if not daily_steam_check.is_running():
+        daily_steam_check.start()
+        print("Steam Check Started.")
+        await daily_steam_check()
 
+@tasks.loop(time=steam_time_check)
+async def daily_steam_check():
+    channel = bot.get_channel(os.getenv("SALE_ANNOUNCEMENT_CHANNEL"))
+    await update_sales(channel)
 
 @bot.group()
 async def cool(ctx):
@@ -53,7 +98,7 @@ async def _bot(ctx):
 class Game_Tools(commands.Cog, name='Game Tools'):
     def __init__(self, bot):
         self.bot = bot
-    
+
     @commands.command()
     async def chwazi(self, ctx):
         """Randomly chooses a voice participant."""
@@ -160,21 +205,25 @@ class Help_Planning_Games(commands.Cog, name='Help Planning Games'):
     
     @commands.command()
     async def wishlistadd(self, ctx, *games_names):
-        """Records a game played by the user."""
+        """Records a game played by the user. Recorded games have their sales tracked."""
         check_data_file()
         games_names = ' '.join(games_names)
         if not games_names:
-            await ctx.send('Please provide one or more game names to record, separated by commas.')
+            await ctx.send('Please provide one or more game appIDs to record, separated by commas.')
             return
         with open("_data.json", 'r+') as file:
             data = json.load(file)
             for game in [ name.strip() for name in games_names.split(',')]:
-                if( game not in data["wishlist"]):
-                    data["wishlist"].append(game)
-                    file.seek(0)
-                    file.write(json.dumps(data))
-                    file.truncate()
-                    await ctx.send(f'Game "{game}" has been wishlisted!')
+                if( not game in data['wishlist']):
+                    steamInfo = steamApi.getGameSaleInfo(game)
+                    if( steamInfo ):
+                        data["wishlist"][game] = steamInfo
+                        file.seek(0)
+                        file.write(json.dumps(data))
+                        file.truncate()
+                        await ctx.send(f'Game "{steamInfo["name"]}" has been wishlisted!')
+                    else:
+                        await ctx.send(f'Could not find game with appId {game}')
                 else:
                     await ctx.send(f'Game "{game}" is already wishlisted!')
 
@@ -185,7 +234,7 @@ class Help_Planning_Games(commands.Cog, name='Help Planning Games'):
         with open("_data.json", 'r+') as file:
             data = json.load(file)
             if data["wishlist"]:
-                games_list = '\n- '.join(data["wishlist"])
+                games_list = '\n- '.join([data["wishlist"][game]["name"] + ': ' + data["wishlist"][game]['appId'] for game in data["wishlist"].keys()])
                 await ctx.send(f'Wishlisted games: \n- {games_list}')
             else:
                 await ctx.send('No games have been wishlisted yet.')
@@ -195,14 +244,14 @@ class Help_Planning_Games(commands.Cog, name='Help Planning Games'):
         """Forgets a wishlisted game."""
         game_names = ' '.join(game_names)
         if not game_names:
-            await ctx.send('Please provide one or more game names to forget, separated by commas.')
+            await ctx.send('Please provide one or more game appIDs to forget, separated by commas.')
             return
         check_data_file()
         with open("_data.json", 'r+') as file:
             data = json.load(file)
             for game in [ name.strip() for name in game_names.split(',')]:
                 if game in data["wishlist"]:
-                    data["wishlist"].remove(game)
+                    data["wishlist"].pop(game)
                     file.seek(0)
                     file.write(json.dumps(data))
                     file.truncate()
