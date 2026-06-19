@@ -20,7 +20,7 @@ def getGameSaleInfo(appId: str):
                 return {
                     "appId": appId,
                     "name": gameName,
-                    "price": 9999
+                    "price": "$9999"
                 }
             sale = gameWrapper.find('div', class_='discount_pct')
             price = gameWrapper.find('div', class_='discount_final_price')

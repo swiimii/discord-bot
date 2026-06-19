@@ -38,7 +38,7 @@ async def update_sales(channel):
                 saleInfo = steamApi.getGameSaleInfo(appId)
                 if saleInfo:
                     data["wishlist"][appId] = saleInfo
-                    if "sale" in saleInfo.keys() and float(saleInfo["price"].replace("$","")) < (previousPrice - .01):
+                    if "sale" in saleInfo.keys() and float(saleInfo["price"].replace("$","")) < (float(previousPrice.replace("$","")) - .01):
                         newSalesCount += 1
                         message_str += f"\n### {saleInfo['name']} is {saleInfo['sale']} off, down to {saleInfo['price']}."
                         message_str += f"\n{saleInfo['saleDetails']}\n"
