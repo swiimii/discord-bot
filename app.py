@@ -21,7 +21,7 @@ intents_cfg = discord.Intents.default()
 intents_cfg.members = True
 intents_cfg.message_content = True
 
-steam_time_check = [datetime.time(hour=14, minute=30, tzinfo=datetime.timezone(datetime.timedelta(hours=-5), name="EST"))]
+steam_time_check = [datetime.time(hour=17, minute=11, tzinfo=datetime.timezone(datetime.timedelta(hours=-5), name="EST"))]
 
 async def update_sales(channel):
     newSalesCount = 0
