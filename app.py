@@ -21,7 +21,7 @@ intents_cfg = discord.Intents.default()
 intents_cfg.members = True
 intents_cfg.message_content = True
 
-steam_time_check = [datetime.time(hour=17, minute=11, tzinfo=datetime.timezone(datetime.timedelta(hours=-5), name="EST"))]
+steam_time_check = [datetime.time(hour=17, minute=14, tzinfo=datetime.timezone(datetime.timedelta(hours=-5), name="EST"))]
 
 async def update_sales(channel):
     newSalesCount = 0
@@ -78,6 +78,7 @@ async def on_ready():
 @tasks.loop(time=steam_time_check)
 async def daily_steam_check():
     channel = bot.get_channel(int(os.getenv("SALE_ANNOUNCEMENT_CHANNEL")))
+    print("Channel: " + str(channel))
     await update_sales(channel)
 
 @bot.group()
