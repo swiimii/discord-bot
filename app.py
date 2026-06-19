@@ -32,7 +32,7 @@ async def update_sales(channel):
         if data["wishlist"]:
             games_appid_list = [ key for key in data["wishlist"].keys() ]
             for appId in games_appid_list:
-                previousPrice = 99999.0
+                previousPrice = "$99999.0"
                 if( "price" in data["wishlist"][appId] ):
                     previousPrice = data["wishlist"][appId]["price"]
                 saleInfo = steamApi.getGameSaleInfo(appId)
