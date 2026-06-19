@@ -77,7 +77,7 @@ async def on_ready():
 
 @tasks.loop(time=steam_time_check)
 async def daily_steam_check():
-    channel = bot.get_channel(os.getenv("SALE_ANNOUNCEMENT_CHANNEL"))
+    channel = bot.get_channel(int(os.getenv("SALE_ANNOUNCEMENT_CHANNEL")))
     await update_sales(channel)
 
 @bot.group()
